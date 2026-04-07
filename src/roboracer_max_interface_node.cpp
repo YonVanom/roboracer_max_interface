@@ -93,6 +93,7 @@ void RoboracerMaxInterfaceNode::onOdom(const nav_msgs::msg::Odometry::SharedPtr 
 
   autoware_vehicle_msgs::msg::VelocityReport velocity;
   velocity.header = msg->header;
+  velocity.header.frame_id = "base_link";  // Override frame to match expected value in Autoware
   velocity.longitudinal_velocity = static_cast<float>(long_vel);
   velocity.lateral_velocity = static_cast<float>(lat_vel);
   velocity.heading_rate = static_cast<float>(heading_rate);
