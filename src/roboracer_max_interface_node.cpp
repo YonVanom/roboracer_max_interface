@@ -1,3 +1,4 @@
+#include <cmath>
 #include <memory>
 
 #include "roboracer_max_interface/roboracer_max_interface_node.hpp"
@@ -15,6 +16,14 @@ RoboracerMaxInterfaceNode::RoboracerMaxInterfaceNode()
     this->declare_parameter<std::string>("steering_status_topic", steering_status_topic_);
   velocity_status_topic_ =
     this->declare_parameter<std::string>("velocity_status_topic", velocity_status_topic_);
+  moving_average_window_ =
+    this->declare_parameter<int>("moving_average_window", moving_average_window_);
+  longitudinal_decimal_places_ =
+    this->declare_parameter<int>("longitudinal_decimal_places", longitudinal_decimal_places_);
+  lateral_decimal_places_ =
+    this->declare_parameter<int>("lateral_decimal_places", lateral_decimal_places_);
+  heading_rate_decimal_places_ =
+    this->declare_parameter<int>("heading_rate_decimal_places", heading_rate_decimal_places_);
 
   control_cmd_sub_ = this->create_subscription<autoware_control_msgs::msg::Control>(
     control_cmd_topic_, rclcpp::QoS{1},
@@ -34,12 +43,32 @@ RoboracerMaxInterfaceNode::RoboracerMaxInterfaceNode()
     velocity_status_topic_, rclcpp::QoS{1});
 }
 
+double RoboracerMaxInterfaceNode::updateMovingAverage(
+  std::deque<double> & window, double & sum, double sample) const
+{
+  sum += sample;
+  window.push_back(sample);
+  if (static_cast<int>(window.size()) > moving_average_window_) {
+    sum -= window.front();
+    window.pop_front();
+  }
+  return sum / static_cast<double>(window.size());
+}
+
+double RoboracerMaxInterfaceNode::maybeRound(double value, int decimal_places)
+{
+  if (decimal_places < 0) {
+    return value;
+  }
+  const double scale = std::pow(10.0, decimal_places);
+  return std::round(value * scale) / scale;
+}
+
 void RoboracerMaxInterfaceNode::onControlCmd(
   const autoware_control_msgs::msg::Control::SharedPtr msg)
 {
   ackermann_msgs::msg::AckermannDriveStamped drive;
   drive.header.stamp = msg->stamp;
-  drive.header.frame_id = "base_link";
   drive.drive.speed = msg->longitudinal.velocity;
   drive.drive.steering_angle = msg->lateral.steering_tire_angle;
   drive_pub_->publish(drive);
@@ -52,12 +81,21 @@ void RoboracerMaxInterfaceNode::onControlCmd(
 
 void RoboracerMaxInterfaceNode::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
+  const double long_vel = maybeRound(
+    updateMovingAverage(long_vel_window_, long_vel_sum_, msg->twist.twist.linear.x),
+    longitudinal_decimal_places_);
+  const double lat_vel = maybeRound(
+    updateMovingAverage(lat_vel_window_, lat_vel_sum_, msg->twist.twist.linear.y),
+    lateral_decimal_places_);
+  const double heading_rate = maybeRound(
+    updateMovingAverage(heading_rate_window_, heading_rate_sum_, msg->twist.twist.angular.z),
+    heading_rate_decimal_places_);
+
   autoware_vehicle_msgs::msg::VelocityReport velocity;
   velocity.header = msg->header;
-  velocity.header.frame_id = "base_link";
-  velocity.longitudinal_velocity = static_cast<float>(msg->twist.twist.linear.x);
-  velocity.lateral_velocity = static_cast<float>(msg->twist.twist.linear.y);
-  velocity.heading_rate = static_cast<float>(msg->twist.twist.angular.z);
+  velocity.longitudinal_velocity = static_cast<float>(long_vel);
+  velocity.lateral_velocity = static_cast<float>(lat_vel);
+  velocity.heading_rate = static_cast<float>(heading_rate);
   velocity_status_pub_->publish(velocity);
 }
 
