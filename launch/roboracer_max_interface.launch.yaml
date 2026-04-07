@@ -1,0 +1,32 @@
+launch:
+- arg:
+    name: control_cmd_topic
+    default: /control/command/control_cmd
+- arg:
+    name: odom_topic
+    default: /ego/odom
+- arg:
+    name: drive_topic
+    default: /ego/drive
+- arg:
+    name: steering_status_topic
+    default: /vehicle/status/steering_status
+- arg:
+    name: velocity_status_topic
+    default: /vehicle/status/velocity_status
+- node:
+    pkg: roboracer_max_interface
+    exec: roboracer_max_interface_node
+    name: roboracer_max_interface_node
+    output: screen
+    param:
+      - name: control_cmd_topic
+        value: $(var control_cmd_topic)
+      - name: odom_topic
+        value: $(var odom_topic)
+      - name: drive_topic
+        value: $(var drive_topic)
+      - name: steering_status_topic
+        value: $(var steering_status_topic)
+      - name: velocity_status_topic
+        value: $(var velocity_status_topic)
