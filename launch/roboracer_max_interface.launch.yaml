@@ -9,6 +9,12 @@ launch:
     name: drive_topic
     default: /ego/drive
 - arg:
+    name: control_mode_topic
+    default: /ego/control_mode
+- arg:
+    name: control_mode_report_topic
+    default: /vehicle/status/control_mode
+- arg:
     name: steering_status_topic
     default: /vehicle/status/steering_status
 - arg:
@@ -42,6 +48,10 @@ launch:
         value: $(var odom_topic)
       - name: drive_topic
         value: $(var drive_topic)
+      - name: control_mode_topic
+        value: $(var control_mode_topic)
+      - name: control_mode_report_topic
+        value: $(var control_mode_report_topic)
       - name: steering_status_topic
         value: $(var steering_status_topic)
       - name: velocity_status_topic

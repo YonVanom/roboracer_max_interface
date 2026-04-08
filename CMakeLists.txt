@@ -12,6 +12,7 @@ find_package(ackermann_msgs REQUIRED)
 find_package(autoware_control_msgs REQUIRED)
 find_package(autoware_vehicle_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_executable(roboracer_max_interface_node
   src/roboracer_max_interface_node.cpp
@@ -28,6 +29,7 @@ ament_target_dependencies(roboracer_max_interface_node
   autoware_control_msgs
   autoware_vehicle_msgs
   nav_msgs
+  std_msgs
 )
 
 install(TARGETS

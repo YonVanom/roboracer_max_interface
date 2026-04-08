@@ -12,6 +12,10 @@ RoboracerMaxInterfaceNode::RoboracerMaxInterfaceNode()
     this->declare_parameter<std::string>("control_cmd_topic", control_cmd_topic_);
   odom_topic_ = this->declare_parameter<std::string>("odom_topic", odom_topic_);
   drive_topic_ = this->declare_parameter<std::string>("drive_topic", drive_topic_);
+  control_mode_topic_ =
+    this->declare_parameter<std::string>("control_mode_topic", control_mode_topic_);
+  control_mode_report_topic_ =
+    this->declare_parameter<std::string>("control_mode_report_topic", control_mode_report_topic_);
   steering_status_topic_ =
     this->declare_parameter<std::string>("steering_status_topic", steering_status_topic_);
   velocity_status_topic_ =
@@ -33,8 +37,15 @@ RoboracerMaxInterfaceNode::RoboracerMaxInterfaceNode()
     odom_topic_, rclcpp::QoS{1},
     std::bind(&RoboracerMaxInterfaceNode::onOdom, this, _1));
 
+  control_mode_sub_ = this->create_subscription<std_msgs::msg::Int32>(
+    control_mode_topic_, rclcpp::QoS{1},
+    std::bind(&RoboracerMaxInterfaceNode::onControlMode, this, _1));
+
   drive_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(
     drive_topic_, rclcpp::QoS{1});
+
+  control_mode_pub_ = this->create_publisher<autoware_vehicle_msgs::msg::ControlModeReport>(
+    control_mode_report_topic_, rclcpp::QoS{1});
 
   steering_status_pub_ = this->create_publisher<autoware_vehicle_msgs::msg::SteeringReport>(
     steering_status_topic_, rclcpp::QoS{1});
@@ -98,6 +109,16 @@ void RoboracerMaxInterfaceNode::onOdom(const nav_msgs::msg::Odometry::SharedPtr 
   velocity.lateral_velocity = static_cast<float>(lat_vel);
   velocity.heading_rate = static_cast<float>(heading_rate);
   velocity_status_pub_->publish(velocity);
+}
+
+void RoboracerMaxInterfaceNode::onControlMode(const std_msgs::msg::Int32::SharedPtr msg)
+{
+  autoware_vehicle_msgs::msg::ControlModeReport out;
+  out.stamp = this->now();
+  out.mode = (msg->data == 1)
+    ? autoware_vehicle_msgs::msg::ControlModeReport::AUTONOMOUS
+    : autoware_vehicle_msgs::msg::ControlModeReport::MANUAL;
+  control_mode_pub_->publish(out);
 }
 
 int main(int argc, char ** argv)
