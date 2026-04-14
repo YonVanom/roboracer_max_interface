@@ -52,9 +52,9 @@ private:
   float current_steering_angle_{0.0F};
 
   int moving_average_window_{10};
-  int longitudinal_decimal_places_{-1};  // -1 disables rounding
-  int lateral_decimal_places_{-1};
-  int heading_rate_decimal_places_{-1};
+  int longitudinal_decimal_places_{1};  // -1 disables rounding
+  int lateral_decimal_places_{2};
+  int heading_rate_decimal_places_{3};
 
   // Moving average state: one window + running sum per velocity channel
   std::deque<double> long_vel_window_;

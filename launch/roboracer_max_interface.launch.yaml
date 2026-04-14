@@ -30,15 +30,15 @@ launch:
     description: Number of odom samples to average for velocity smoothing.
 - arg:
     name: longitudinal_decimal_places
-    default: "-1"
+    default: "1"
     description: Decimal places to round filtered longitudinal velocity to. -1 disables rounding.
 - arg:
     name: lateral_decimal_places
-    default: "-1"
+    default: "2"
     description: Decimal places to round filtered lateral velocity to. -1 disables rounding.
 - arg:
     name: heading_rate_decimal_places
-    default: "-1"
+    default: "3"
     description: Decimal places to round filtered heading rate to. -1 disables rounding.
 - node:
     pkg: roboracer_max_interface
