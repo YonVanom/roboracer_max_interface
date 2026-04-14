@@ -20,6 +20,8 @@ RoboracerMaxInterfaceNode::RoboracerMaxInterfaceNode()
     this->declare_parameter<std::string>("steering_status_topic", steering_status_topic_);
   velocity_status_topic_ =
     this->declare_parameter<std::string>("velocity_status_topic", velocity_status_topic_);
+  steering_report_rate_hz_ =
+    this->declare_parameter<double>("steering_report_rate_hz", steering_report_rate_hz_);
   moving_average_window_ =
     this->declare_parameter<int>("moving_average_window", moving_average_window_);
   longitudinal_decimal_places_ =
@@ -52,6 +54,11 @@ RoboracerMaxInterfaceNode::RoboracerMaxInterfaceNode()
 
   velocity_status_pub_ = this->create_publisher<autoware_vehicle_msgs::msg::VelocityReport>(
     velocity_status_topic_, rclcpp::QoS{1});
+
+  const auto period =
+    std::chrono::duration<double>(1.0 / steering_report_rate_hz_);
+  steering_report_timer_ = this->create_wall_timer(
+    period, std::bind(&RoboracerMaxInterfaceNode::publishSteeringReport, this));
 }
 
 double RoboracerMaxInterfaceNode::updateMovingAverage(
@@ -78,15 +85,20 @@ double RoboracerMaxInterfaceNode::maybeRound(double value, int decimal_places)
 void RoboracerMaxInterfaceNode::onControlCmd(
   const autoware_control_msgs::msg::Control::SharedPtr msg)
 {
+  current_steering_angle_ = msg->lateral.steering_tire_angle;
+
   ackermann_msgs::msg::AckermannDriveStamped drive;
   drive.header.stamp = msg->stamp;
   drive.drive.speed = msg->longitudinal.velocity;
   drive.drive.steering_angle = msg->lateral.steering_tire_angle;
   drive_pub_->publish(drive);
+}
 
+void RoboracerMaxInterfaceNode::publishSteeringReport()
+{
   autoware_vehicle_msgs::msg::SteeringReport steering;
-  steering.stamp = msg->stamp;
-  steering.steering_tire_angle = msg->lateral.steering_tire_angle;
+  steering.stamp = this->now();
+  steering.steering_tire_angle = current_steering_angle_;
   steering_status_pub_->publish(steering);
 }
 

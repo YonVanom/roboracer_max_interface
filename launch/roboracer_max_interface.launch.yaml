@@ -21,6 +21,10 @@ launch:
     name: velocity_status_topic
     default: /vehicle/status/velocity_status
 - arg:
+    name: steering_report_rate_hz
+    default: "30.0"
+    description: Rate at which the steering status report is published [Hz].
+- arg:
     name: moving_average_window
     default: "10"
     description: Number of odom samples to average for velocity smoothing.
@@ -56,6 +60,8 @@ launch:
         value: $(var steering_status_topic)
       - name: velocity_status_topic
         value: $(var velocity_status_topic)
+      - name: steering_report_rate_hz
+        value: $(var steering_report_rate_hz)
       - name: moving_average_window
         value: $(var moving_average_window)
       - name: longitudinal_decimal_places

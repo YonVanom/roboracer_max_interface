@@ -22,6 +22,7 @@ private:
   void onControlCmd(const autoware_control_msgs::msg::Control::SharedPtr msg);
   void onOdom(const nav_msgs::msg::Odometry::SharedPtr msg);
   void onControlMode(const std_msgs::msg::Int32::SharedPtr msg);
+  void publishSteeringReport();
 
   // Returns the updated moving average after pushing a new sample.
   double updateMovingAverage(std::deque<double> & window, double & sum, double sample) const;
@@ -32,6 +33,7 @@ private:
   rclcpp::Subscription<autoware_control_msgs::msg::Control>::SharedPtr control_cmd_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr control_mode_sub_;
+  rclcpp::TimerBase::SharedPtr steering_report_timer_;
 
   rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_pub_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr control_mode_pub_;
@@ -45,6 +47,9 @@ private:
   std::string control_mode_report_topic_{"/vehicle/status/control_mode"};
   std::string steering_status_topic_{"/vehicle/status/steering_status"};
   std::string velocity_status_topic_{"/vehicle/status/velocity_status"};
+
+  double steering_report_rate_hz_{30.0};
+  float current_steering_angle_{0.0F};
 
   int moving_average_window_{10};
   int longitudinal_decimal_places_{-1};  // -1 disables rounding
